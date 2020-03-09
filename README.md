@@ -18,5 +18,5 @@ let (mut file, filename) = tun::OpenOptions::new()
 ```
 
 ## Support Platforms
-- [*] Linux
-- [ ] OpenBSD
+
+- Linux
