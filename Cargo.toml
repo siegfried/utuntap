@@ -1,10 +1,10 @@
 [package]
-name = "tun_tap"
+name = "utuntap"
 version = "0.1.0"
 authors = ["siegfried <zhiqiang.lei@gmail.com>"]
 edition = "2018"
-homepage = "https://github.com/siegfried/tun_tap"
-repository = "https://github.com/siegfried/tun_tap.git"
+homepage = "https://github.com/siegfried/utuntap"
+repository = "https://github.com/siegfried/utuntap.git"
 readme = "README.md"
 license = "MIT"
 description = "A low level Rust library for Tun/Tap devices."

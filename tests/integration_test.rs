@@ -1,4 +1,4 @@
-use tun_tap::tun;
+use utuntap::tun;
 use etherparse::{IpHeader, PacketBuilder, PacketHeaders, TransportHeader};
 use serial_test::serial;
 use std::io::Read;
