@@ -1,5 +1,7 @@
 # Universal TunTap
 
+[![codecov](https://codecov.io/gh/siegfried/utuntap/branch/master/graph/badge.svg)](https://codecov.io/gh/siegfried/utuntap)
+
 A low level Rust library for Tun/Tap devices.
 
 ## Usage
