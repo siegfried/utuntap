@@ -1,4 +1,4 @@
-# TunTap
+# Universal TunTap
 
 A low level Rust library for Tun/Tap devices.
 
