@@ -7,7 +7,7 @@ A low level Rust library for Tun/Tap devices.
 It simply provides more options to open Tun/Tap device files.
 
 ```rust
-use tun_tap::tun;
+use utuntap::tun;
 
 
 let (mut file, filename) = tun::OpenOptions::new()
