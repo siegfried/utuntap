@@ -12,7 +12,7 @@ description = "A low level Rust library for Tun/Tap devices."
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [badges]
-travis-ci = { repository = "siegfried/tun_tap", branch = "master" }
+travis-ci = { repository = "siegfried/utuntap", branch = "master" }
 
 [dependencies]
 libc = "~0.2"
