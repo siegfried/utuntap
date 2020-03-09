@@ -11,6 +11,9 @@ license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[badges]
+travis-ci = { repository = "siegfried/tun_tap", branch = "master" }
+
 [dependencies]
 libc = "~0.2"
 nix = "~0.17"

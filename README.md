@@ -2,6 +2,8 @@
 
 A low level Rust library for Tun/Tap devices.
 
+[![Build Status](https://travis-ci.org/siegfried/tun_tap.svg?branch=master)](https://travis-ci.org/siegfried/tun_tap)
+
 ## Usage
 
 It simply provides more options to open Tun/Tap device files.
