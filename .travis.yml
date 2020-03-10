@@ -13,4 +13,8 @@ os:
   - linux
 
 script:
-  - make test
+  - make prepare
+  - cargo build --verbose
+  - cargo test --verbose
+  - cargo build --verbose --target x86_64-unknown-linux-musl
+  - cargo test --verbose --target x86_64-unknown-linux-musl
