@@ -19,6 +19,11 @@ pub struct Request {
     union: RequestUnion,
 }
 
+#[cfg(all(target_env = "musl"))]
+type RequestId = c_int;
+#[cfg(all(not(target_env = "musl")))]
+type RequestId = c_ulong;
+
 impl Request {
     pub fn with_flags(device_name: Option<String>, flags: c_short) -> Self {
         Request {
@@ -28,11 +33,7 @@ impl Request {
     }
 
     pub fn set_interface(mut self, fd: RawFd) -> Result<String> {
-        #[cfg(all(target_env = "musl"))]
-        const TUNSETIFF: c_int = request_code_write!(b'T', 202, mem::size_of::<c_int>());
-        #[cfg(all(not(target_env = "musl")))]
-        const TUNSETIFF: c_ulong = request_code_write!(b'T', 202, mem::size_of::<c_int>());
-
+        const TUNSETIFF: RequestId = request_code_write!(b'T', 202, mem::size_of::<c_int>());
         self.ioctl(fd, TUNSETIFF)?;
         let filename = {
             let name: Vec<u8> = self.name.iter().take_while(|n| **n != 0).cloned().collect();
@@ -41,7 +42,7 @@ impl Request {
         Ok(filename)
     }
 
-    fn ioctl(&mut self, fd: RawFd, id: c_ulong) -> Result<()> {
+    fn ioctl(&mut self, fd: RawFd, id: RequestId) -> Result<()> {
         let result = unsafe { libc::ioctl(fd, id, self) };
 
         if result == -1 {
