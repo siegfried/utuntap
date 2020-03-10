@@ -1,13 +1,15 @@
 #[macro_use]
 extern crate nix;
 
+#[cfg_attr(target_os = "linux", path = "interface/linux.rs")]
+mod interface;
+
 use std::fmt;
 use std::fs::{self, File};
 use std::io::Result;
 use std::os::unix::io::AsRawFd;
-
-#[cfg_attr(target_os = "linux", path = "interface/linux.rs")]
-mod interface;
+#[cfg(all(target_os = "linux"))]
+use interface::Flags;
 
 #[derive(Debug, PartialEq)]
 enum Mode {
@@ -73,13 +75,17 @@ impl OpenOptions {
     }
 
     #[cfg(all(target_os = "linux"))]
-    fn flags(&self) -> libc::c_short {
+    fn flags(&self) -> Flags {
+        const IFF_TUN: Flags = 0x0001;
+        const IFF_TAP: Flags = 0x0002;
+        const IFF_NO_PI: Flags = 0x1000;
+
         let mut flags = match self.mode {
-            Mode::Tun => interface::IFF_TUN,
-            Mode::Tap => interface::IFF_TAP,
+            Mode::Tun => IFF_TUN,
+            Mode::Tap => IFF_TAP,
         };
         if !self.packet_info {
-            flags |= interface::IFF_NO_PI;
+            flags |= IFF_NO_PI;
         }
         flags
     }
