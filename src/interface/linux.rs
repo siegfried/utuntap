@@ -32,7 +32,7 @@ impl Request {
         }
     }
 
-    pub fn set_interface(mut self, fd: RawFd) -> Result<String> {
+    pub fn set_tuntap(mut self, fd: RawFd) -> Result<String> {
         const TUNSETIFF: RequestId = request_code_write!(b'T', 202, mem::size_of::<c_int>());
         self.ioctl(fd, TUNSETIFF)?;
         let filename = {
