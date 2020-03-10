@@ -3,8 +3,10 @@ use std::io::{self, Result};
 use std::mem;
 use std::os::unix::io::RawFd;
 
+pub type Flags = c_short;
+
 union RequestUnion {
-    flags: c_short,
+    flags: Flags,
 }
 
 type Name = [u8; IFNAMSIZ];
@@ -21,7 +23,7 @@ type RequestId = c_int;
 type RequestId = c_ulong;
 
 impl Request {
-    pub fn with_flags(device_name: Option<String>, flags: c_short) -> Self {
+    pub fn with_flags(device_name: Option<String>, flags: Flags) -> Self {
         Request {
             name: name(device_name),
             union: RequestUnion { flags: flags },
