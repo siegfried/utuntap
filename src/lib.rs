@@ -96,7 +96,7 @@ impl OpenOptions {
     fn open(&self) -> Result<(File, String)> {
         let file = self.options.open("/dev/net/tun")?;
         let filename = interface::Request::with_flags(self.device_name(), self.flags())
-            .set_interface(file.as_raw_fd())?;
+            .set_tuntap(file.as_raw_fd())?;
         Ok((file, filename))
     }
 }
