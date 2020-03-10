@@ -5,6 +5,8 @@ use std::fmt;
 use std::fs::{self, File};
 use std::io::Result;
 use std::os::unix::io::AsRawFd;
+#[cfg(all(target_os = "linux"))]
+use libc::c_short;
 
 #[cfg_attr(target_os = "linux", path = "interface/linux.rs")]
 mod interface;
@@ -74,12 +76,16 @@ impl OpenOptions {
 
     #[cfg(all(target_os = "linux"))]
     fn flags(&self) -> libc::c_short {
+        const IFF_TUN: c_short = 0x0001;
+        const IFF_TAP: c_short = 0x0002;
+        const IFF_NO_PI: c_short = 0x1000;
+
         let mut flags = match self.mode {
-            Mode::Tun => interface::IFF_TUN,
-            Mode::Tap => interface::IFF_TAP,
+            Mode::Tun => IFF_TUN,
+            Mode::Tap => IFF_TAP,
         };
         if !self.packet_info {
-            flags |= interface::IFF_NO_PI;
+            flags |= IFF_NO_PI;
         }
         flags
     }
