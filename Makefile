@@ -9,5 +9,5 @@ prepare: clean
 	sh tests/setup.sh
 
 test: prepare
-	cargo test
+	sh tests/run.sh
 	make clean
