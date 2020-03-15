@@ -1,9 +1,9 @@
-use utuntap::tun;
 use etherparse::{IpHeader, PacketBuilder, PacketHeaders, TransportHeader};
 use serial_test::serial;
 use std::io::Read;
 use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr, UdpSocket};
+use utuntap::tun;
 
 #[cfg(target_os = "linux")]
 #[test]
@@ -73,6 +73,9 @@ fn tun_receives_packets() {
 }
 
 #[cfg(target_os = "openbsd")]
+use std::io::IoSlice;
+
+#[cfg(target_os = "openbsd")]
 #[test]
 #[serial]
 fn tun_sents_packets() {
@@ -126,9 +129,9 @@ fn tun_receives_packets() {
         builder
             .write(&mut packet, &data)
             .expect("failed to build packet");
-        packet.splice(0..0, family.iter())
+        [IoSlice::new(&family), IoSlice::new(&packet)]
     };
-    file.write(&packet).expect("failed to send packet");
+    file.write_vectored(&packet).expect("failed to send packet");
     let mut buffer = [0; 50];
     let (number, source) = socket
         .recv_from(&mut buffer)
