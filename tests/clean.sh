@@ -2,4 +2,9 @@
 
 set -x
 
-sudo ip tuntap del tun10 mode tun
+case `uname` in
+    "Linux")
+        sudo ip tuntap del tun10 mode tun
+        ;;
+    "*") ;;
+esac

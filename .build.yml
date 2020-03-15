@@ -1,0 +1,14 @@
+image: openbsd/latest
+secrets:
+  - 91ea83b4-98ef-4f64-b81f-57bdf3ef4684
+packages:
+  - rust
+sources:
+  - git@github.com:siegfried/utuntap.git
+tasks:
+  - stable: |
+      cd utuntap/
+      make test
+  - docs: |
+      cd utuntap/
+      cargo doc --no-deps
