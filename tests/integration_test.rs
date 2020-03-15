@@ -77,7 +77,6 @@ fn tun_receives_packets() {
 #[serial]
 fn tun_sents_packets() {
     let (mut file, filename) = tun::OpenOptions::new()
-        .packet_info(false)
         .number(10)
         .open()
         .expect("failed to open device");
@@ -114,7 +113,6 @@ fn tun_sents_packets() {
 #[serial]
 fn tun_receives_packets() {
     let (mut file, filename) = tun::OpenOptions::new()
-        .packet_info(false)
         .number(10)
         .open()
         .expect("failed to open device");
@@ -128,7 +126,7 @@ fn tun_receives_packets() {
         builder
             .write(&mut packet, &data)
             .expect("failed to build packet");
-        packet.splice(0..0, family)
+        packet.splice(0..0, family.iter())
     };
     file.write(&packet).expect("failed to send packet");
     let mut buffer = [0; 50];

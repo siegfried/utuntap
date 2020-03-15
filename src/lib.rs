@@ -110,7 +110,7 @@ impl OpenOptions {
     #[cfg(target_os = "openbsd")]
     fn open(&self) -> Result<(File, String)> {
         if let Some(filename) = self.device_name() {
-            let path = std::path::Path::new("/dev").join(filename);
+            let path = std::path::Path::new("/dev").join(&filename);
             let file = self.options.open(path)?;
             Ok((file, filename))
         } else {
