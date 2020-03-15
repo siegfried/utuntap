@@ -10,11 +10,6 @@ case $OS in
         cargo build --verbose --target x86_64-unknown-linux-musl
         cargo test --verbose --target x86_64-unknown-linux-musl
         ;;
-    "OpenBSD")
-        set -x
-        cargo build --verbose
-        doas cargo test --verbose
-        ;;
     *)
         set -x
         cargo build --verbose
