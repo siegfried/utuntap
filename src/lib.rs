@@ -1,7 +1,8 @@
 #[macro_use]
 extern crate nix;
 
-#[cfg_attr(target_os = "linux", path = "interface/linux.rs")]
+#[cfg(target_os = "linux")]
+#[path = "interface/linux.rs"]
 mod interface;
 
 use std::fmt;
@@ -104,6 +105,17 @@ impl OpenOptions {
         let filename = interface::Request::with_flags(self.device_name(), self.flags())
             .set_tuntap(file.as_raw_fd())?;
         Ok((file, filename))
+    }
+
+    #[cfg(target_os = "openbsd")]
+    fn open(&self) -> Result<(File, String)> {
+        if let Some(filename) = self.device_name() {
+            let path = std::path::Path::new("/dev").join(filename);
+            let file = self.options.open(path)?;
+            Ok((file, filename))
+        } else {
+            panic!("Unknown device number.")
+        }
     }
 }
 

@@ -71,3 +71,72 @@ fn tun_receives_packets() {
     assert_eq!(source.port(), 4242);
     assert_eq!(data, &buffer[..number]);
 }
+
+#[cfg(target_os = "openbsd")]
+#[test]
+#[serial]
+fn tun_sents_packets() {
+    let (mut file, filename) = tun::OpenOptions::new()
+        .packet_info(false)
+        .number(10)
+        .open()
+        .expect("failed to open device");
+    assert_eq!(filename, "tun10");
+    let data = [1; 10];
+    let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
+    socket
+        .send_to(&data, "10.10.10.2:4242")
+        .expect("failed to send data");
+    let mut buffer = [0; 50];
+    let number = file.read(&mut buffer).expect("failed to receive data");
+    assert_eq!(number, 42);
+    assert_eq!(&buffer[..4], [0u8, 0, 0, 2]);
+    let packet = &buffer[4..number];
+    if let PacketHeaders {
+        ip: Some(IpHeader::Version4(ip_header)),
+        transport: Some(TransportHeader::Udp(udp_header)),
+        payload,
+        ..
+    } = PacketHeaders::from_ip_slice(&packet).expect("failed to parse packet")
+    {
+        assert_eq!(ip_header.source, [10, 10, 10, 1]);
+        assert_eq!(ip_header.destination, [10, 10, 10, 2]);
+        assert_eq!(udp_header.source_port, 2424);
+        assert_eq!(udp_header.destination_port, 4242);
+        assert_eq!(payload, data);
+    } else {
+        assert!(false, "incorrect packet");
+    }
+}
+
+#[cfg(target_os = "openbsd")]
+#[test]
+#[serial]
+fn tun_receives_packets() {
+    let (mut file, filename) = tun::OpenOptions::new()
+        .packet_info(false)
+        .number(10)
+        .open()
+        .expect("failed to open device");
+    assert_eq!(filename, "tun10");
+    let data = [1; 10];
+    let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
+    let builder = PacketBuilder::ipv4([10, 10, 10, 2], [10, 10, 10, 1], 20).udp(4242, 2424);
+    let packet = {
+        let family = [0u8, 0, 0, 2];
+        let mut packet = Vec::<u8>::with_capacity(builder.size(data.len()));
+        builder
+            .write(&mut packet, &data)
+            .expect("failed to build packet");
+        packet.splice(0..0, family)
+    };
+    file.write(&packet).expect("failed to send packet");
+    let mut buffer = [0; 50];
+    let (number, source) = socket
+        .recv_from(&mut buffer)
+        .expect("failed to receive packet");
+    assert_eq!(number, 10);
+    assert_eq!(source.ip(), IpAddr::V4(Ipv4Addr::new(10, 10, 10, 2)));
+    assert_eq!(source.port(), 4242);
+    assert_eq!(data, &buffer[..number]);
+}
