@@ -21,5 +21,5 @@ let (mut file, filename) = tun::OpenOptions::new()
 
 | OS | Status | Comment |
 | -- | ------ | ------- |
-| Linux | [![Build Status](https://travis-ci.org/siegfried/utuntap.svg?branch=master)](https://travis-ci.org/siegfried/utuntap) | mucl is also supported |
+| Linux | [![Build Status](https://travis-ci.org/siegfried/utuntap.svg?branch=master)](https://travis-ci.org/siegfried/utuntap) | musl is also supported |
 | OpenBSD | [![builds.sr.ht status](https://builds.sr.ht/~siegfried/utuntap/.build.yml.svg)](https://builds.sr.ht/~siegfried/utuntap/.build.yml?) |
