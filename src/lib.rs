@@ -1,3 +1,4 @@
+#[cfg(target_os = "linux")]
 #[macro_use]
 extern crate nix;
 
