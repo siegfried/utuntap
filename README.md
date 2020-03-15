@@ -19,6 +19,7 @@ let (mut file, filename) = tun::OpenOptions::new()
 
 ## Support Platforms
 
-### Linux:
-
-[![Build Status](https://travis-ci.org/siegfried/utuntap.svg?branch=master)](https://travis-ci.org/siegfried/utuntap)
+| OS | Status | Comment |
+| -- | ------ | ------- |
+| Linux | [![Build Status](https://travis-ci.org/siegfried/utuntap.svg?branch=master)](https://travis-ci.org/siegfried/utuntap) | mucl is also supported |
+| OpenBSD | [![builds.sr.ht status](https://builds.sr.ht/~siegfried/utuntap/.build.yml.svg)](https://builds.sr.ht/~siegfried/utuntap/.build.yml?) |
