@@ -123,15 +123,16 @@ fn tun_receives_packets() {
     let data = [1; 10];
     let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
     let builder = PacketBuilder::ipv4([10, 10, 10, 2], [10, 10, 10, 1], 20).udp(4242, 2424);
+    let family = [0u8, 0, 0, 2];
     let packet = {
-        let family = [0u8, 0, 0, 2];
         let mut packet = Vec::<u8>::with_capacity(builder.size(data.len()));
         builder
             .write(&mut packet, &data)
             .expect("failed to build packet");
-        [IoSlice::new(&family), IoSlice::new(&packet)]
+        packet
     };
-    file.write_vectored(&packet).expect("failed to send packet");
+    let iovec = [IoSlice::new(&family), IoSlice::new(&packet)];
+    file.write_vectored(&iovec).expect("failed to send packet");
     let mut buffer = [0; 50];
     let (number, source) = socket
         .recv_from(&mut buffer)
