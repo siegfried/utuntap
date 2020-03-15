@@ -28,7 +28,7 @@ impl OpenOptions {
         self
     }
 
-    #[cfg(all(target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     pub fn packet_info(&mut self, value: bool) -> &mut Self {
         self.options.packet_info(value);
         self

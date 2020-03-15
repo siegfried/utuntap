@@ -5,7 +5,7 @@ use std::io::Read;
 use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr, UdpSocket};
 
-#[cfg(all(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 #[test]
 #[serial]
 fn tun_sents_packets() {
@@ -41,7 +41,7 @@ fn tun_sents_packets() {
     }
 }
 
-#[cfg(all(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 #[test]
 #[serial]
 fn tun_receives_packets() {
