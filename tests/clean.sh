@@ -7,6 +7,9 @@ case $OS in
         set -x
         sudo ip tuntap del tun10 mode tun
         ;;
+    "OpenBSD")
+        doas ifconfig tun10 destroy
+        ;;
     *)
         printf "%s is not supported.\n" $OS >&2
         exit 1
