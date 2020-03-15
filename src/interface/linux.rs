@@ -1,9 +1,9 @@
-use libc::{c_int, c_short, c_ulong, IFNAMSIZ};
+use libc::{c_int, IFNAMSIZ};
 use std::io::{self, Result};
 use std::mem;
 use std::os::unix::io::RawFd;
 
-pub type Flags = c_short;
+pub type Flags = libc::c_short;
 
 union RequestUnion {
     flags: Flags,
@@ -17,10 +17,10 @@ pub struct Request {
     union: RequestUnion,
 }
 
-#[cfg(all(target_env = "musl"))]
+#[cfg(target_env = "musl")]
 type RequestId = c_int;
-#[cfg(all(not(target_env = "musl")))]
-type RequestId = c_ulong;
+#[cfg(not(target_env = "musl"))]
+type RequestId = libc::c_ulong;
 
 impl Request {
     pub fn with_flags(device_name: Option<String>, flags: Flags) -> Self {

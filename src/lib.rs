@@ -8,6 +8,7 @@ mod interface;
 use std::fmt;
 use std::fs::{self, File};
 use std::io::Result;
+#[cfg(target_os = "linux")]
 use std::os::unix::io::AsRawFd;
 #[cfg(target_os = "linux")]
 use interface::Flags;
