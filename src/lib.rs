@@ -8,7 +8,7 @@ use std::fmt;
 use std::fs::{self, File};
 use std::io::Result;
 use std::os::unix::io::AsRawFd;
-#[cfg(all(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 use interface::Flags;
 
 #[derive(Debug, PartialEq)]
@@ -31,7 +31,7 @@ struct OpenOptions {
     options: fs::OpenOptions,
     mode: Mode,
     number: Option<u8>,
-    #[cfg(all(target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     packet_info: bool,
 }
 
@@ -43,7 +43,7 @@ impl OpenOptions {
             options,
             mode: Mode::Tun,
             number: None,
-            #[cfg(all(target_os = "linux"))]
+            #[cfg(target_os = "linux")]
             packet_info: false,
         }
     }
@@ -68,13 +68,13 @@ impl OpenOptions {
         self
     }
 
-    #[cfg(all(target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     fn packet_info(&mut self, value: bool) -> &mut Self {
         self.packet_info = value;
         self
     }
 
-    #[cfg(all(target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     fn flags(&self) -> Flags {
         const IFF_TUN: Flags = 0x0001;
         const IFF_TAP: Flags = 0x0002;
@@ -98,7 +98,7 @@ impl OpenOptions {
         }
     }
 
-    #[cfg(all(target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     fn open(&self) -> Result<(File, String)> {
         let file = self.options.open("/dev/net/tun")?;
         let filename = interface::Request::with_flags(self.device_name(), self.flags())
@@ -133,7 +133,7 @@ mod tests {
         assert_eq!(options.number, Some(2));
     }
 
-    #[cfg(all(target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     #[test]
     fn turn_on_packet_info() {
         let mut options = OpenOptions::new();
