@@ -1,7 +1,8 @@
 use etherparse::{IpHeader, PacketBuilder, PacketHeaders, TransportHeader};
 use serial_test::serial;
-use std::io::Read;
-use std::io::Write;
+#[cfg(target_family = "unix")]
+use std::io::ErrorKind;
+use std::io::{Read, Write};
 use std::net::{IpAddr, Ipv4Addr, UdpSocket};
 use utuntap::{tap, tun};
 
@@ -154,7 +155,7 @@ fn tun_non_blocking_io() {
         .expect("failed to open device");
     let mut buffer = [0; 10];
     let error = file.read(&mut buffer).err().unwrap();
-    assert_eq!(error.kind(), std::io::ErrorKind::WouldBlock);
+    assert_eq!(error.kind(), ErrorKind::WouldBlock);
 }
 
 #[cfg(target_family = "unix")]
@@ -168,5 +169,5 @@ fn tap_non_blocking_io() {
         .expect("failed to open device");
     let mut buffer = [0; 10];
     let error = file.read(&mut buffer).err().unwrap();
-    assert_eq!(error.kind(), std::io::ErrorKind::WouldBlock);
+    assert_eq!(error.kind(), ErrorKind::WouldBlock);
 }
