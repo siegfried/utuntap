@@ -23,6 +23,12 @@ impl OpenOptions {
         self
     }
 
+    #[cfg(target_family = "unix")]
+    pub fn nonblock(&mut self, value: bool) -> &mut Self {
+        self.options.nonblock(value);
+        self
+    }
+
     pub fn number(&mut self, value: u8) -> &mut Self {
         self.options.number(value);
         self

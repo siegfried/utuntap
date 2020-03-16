@@ -15,8 +15,10 @@ description = "A low level Rust library for Tun/Tap devices."
 travis-ci = { repository = "siegfried/utuntap", branch = "master" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-libc = "~0.2"
 nix = "~0.17"
+
+[dependencies]
+libc = "~0.2"
 
 [dev-dependencies]
 etherparse = "~0.9"

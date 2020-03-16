@@ -3,7 +3,7 @@ use serial_test::serial;
 use std::io::Read;
 use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr, UdpSocket};
-use utuntap::tun;
+use utuntap::{tap, tun};
 
 #[cfg(target_os = "linux")]
 #[test]
@@ -141,4 +141,32 @@ fn tun_receives_packets() {
     assert_eq!(source.ip(), IpAddr::V4(Ipv4Addr::new(10, 10, 10, 2)));
     assert_eq!(source.port(), 4242);
     assert_eq!(data, &buffer[..number]);
+}
+
+#[cfg(target_family = "unix")]
+#[test]
+#[serial]
+fn tun_non_blocking_io() {
+    let (mut file, filename) = tun::OpenOptions::new()
+        .nonblock(true)
+        .number(11)
+        .open()
+        .expect("failed to open device");
+    let mut buffer = [0; 10];
+    let error = file.read(&mut buffer).err().unwrap();
+    assert_eq!(error.kind(), std::io::ErrorKind::WouldBlock);
+}
+
+#[cfg(target_family = "unix")]
+#[test]
+#[serial]
+fn tap_non_blocking_io() {
+    let (mut file, filename) = tap::OpenOptions::new()
+        .nonblock(true)
+        .number(11)
+        .open()
+        .expect("failed to open device");
+    let mut buffer = [0; 10];
+    let error = file.read(&mut buffer).err().unwrap();
+    assert_eq!(error.kind(), std::io::ErrorKind::WouldBlock);
 }
