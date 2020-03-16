@@ -6,13 +6,13 @@ extern crate nix;
 #[path = "interface/linux.rs"]
 mod interface;
 
-#[cfg(target_os = "linux")]
-use interface::Flags;
 use std::fmt;
 use std::fs::{self, File};
 use std::io::Result;
 #[cfg(target_os = "linux")]
 use std::os::unix::io::AsRawFd;
+#[cfg(target_os = "linux")]
+use interface::Flags;
 
 #[derive(Debug, PartialEq)]
 enum Mode {
@@ -58,11 +58,6 @@ impl OpenOptions {
 
     fn write(&mut self, value: bool) -> &mut Self {
         self.options.write(value);
-        self
-    }
-
-    fn create(&mut self, value: bool) -> &mut Self {
-        self.options.create(value);
         self
     }
 
