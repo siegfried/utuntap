@@ -81,6 +81,7 @@ use std::io::IoSlice;
 fn tun_sents_packets() {
     let (mut file, filename) = tun::OpenOptions::new()
         .number(10)
+        .create(true)
         .open()
         .expect("failed to open device");
     assert_eq!(filename, "tun10");
@@ -117,6 +118,7 @@ fn tun_sents_packets() {
 fn tun_receives_packets() {
     let (mut file, filename) = tun::OpenOptions::new()
         .number(10)
+        .create(true)
         .open()
         .expect("failed to open device");
     assert_eq!(filename, "tun10");

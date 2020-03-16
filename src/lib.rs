@@ -41,7 +41,7 @@ struct OpenOptions {
 impl OpenOptions {
     fn new() -> Self {
         let mut options = fs::OpenOptions::new();
-        options.read(true).write(true).create(true);
+        options.read(true).write(true);
         OpenOptions {
             options,
             mode: Mode::Tun,
