@@ -41,7 +41,7 @@ struct OpenOptions {
 impl OpenOptions {
     fn new() -> Self {
         let mut options = fs::OpenOptions::new();
-        options.read(true).write(true);
+        options.read(true).write(true).create(true);
         OpenOptions {
             options,
             mode: Mode::Tun,
@@ -58,6 +58,11 @@ impl OpenOptions {
 
     fn write(&mut self, value: bool) -> &mut Self {
         self.options.write(value);
+        self
+    }
+
+    fn create(&mut self, value: bool) -> &mut Self {
+        self.options.create(value);
         self
     }
 
