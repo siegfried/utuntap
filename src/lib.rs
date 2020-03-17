@@ -64,10 +64,8 @@ impl OpenOptions {
     }
 
     #[cfg(target_family = "unix")]
-    fn nonblock(&mut self, value: bool) -> &mut Self {
-        if value {
-            self.options.custom_flags(libc::O_NONBLOCK);
-        }
+    fn nonblock(&mut self) -> &mut Self {
+        self.options.custom_flags(libc::O_NONBLOCK);
         self
     }
 

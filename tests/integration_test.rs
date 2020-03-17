@@ -149,7 +149,7 @@ fn tun_receives_packets() {
 #[serial]
 fn tun_non_blocking_io() {
     let (mut file, filename) = tun::OpenOptions::new()
-        .nonblock(true)
+        .nonblock()
         .number(11)
         .open()
         .expect("failed to open device");
@@ -163,7 +163,7 @@ fn tun_non_blocking_io() {
 #[serial]
 fn tap_non_blocking_io() {
     let (mut file, filename) = tap::OpenOptions::new()
-        .nonblock(true)
+        .nonblock()
         .number(11)
         .open()
         .expect("failed to open device");
