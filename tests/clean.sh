@@ -11,8 +11,11 @@ case $OS in
         ;;
     "OpenBSD")
         doas ifconfig tun10 destroy
+        doas rm /dev/tun10
         doas ifconfig tun11 destroy
+        doas rm /dev/tun11
         doas ifconfig tap11 destroy
+        doas rm /dev/tap11
         ;;
     *)
         printf "%s is not supported.\n" $OS >&2
