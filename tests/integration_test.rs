@@ -153,6 +153,7 @@ fn tun_non_blocking_io() {
         .number(11)
         .open()
         .expect("failed to open device");
+    assert_eq!(filename, "tun11");
     let mut buffer = [0; 10];
     let error = file.read(&mut buffer).err().unwrap();
     assert_eq!(error.kind(), ErrorKind::WouldBlock);
@@ -167,6 +168,7 @@ fn tap_non_blocking_io() {
         .number(11)
         .open()
         .expect("failed to open device");
+    assert_eq!(filename, "tap11");
     let mut buffer = [0; 10];
     let error = file.read(&mut buffer).err().unwrap();
     assert_eq!(error.kind(), ErrorKind::WouldBlock);
