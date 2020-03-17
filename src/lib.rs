@@ -36,6 +36,8 @@ struct OpenOptions {
     options: fs::OpenOptions,
     mode: Mode,
     number: Option<u8>,
+    #[cfg(target_family = "unix")]
+    nonblock: bool,
     #[cfg(target_os = "linux")]
     packet_info: bool,
 }
@@ -48,6 +50,8 @@ impl OpenOptions {
             options,
             mode: Mode::Tun,
             number: None,
+            #[cfg(target_family = "unix")]
+            nonblock: false,
             #[cfg(target_os = "linux")]
             packet_info: false,
         }
@@ -64,8 +68,8 @@ impl OpenOptions {
     }
 
     #[cfg(target_family = "unix")]
-    fn nonblock(&mut self) -> &mut Self {
-        self.options.custom_flags(libc::O_NONBLOCK);
+    fn nonblock(&mut self, value: bool) -> &mut Self {
+        self.nonblock = value;
         self
     }
 
@@ -101,6 +105,15 @@ impl OpenOptions {
         flags
     }
 
+    #[cfg(target_family = "unix")]
+    fn options(&mut self) -> &fs::OpenOptions {
+        if self.nonblock {
+            self.options.custom_flags(libc::O_NONBLOCK)
+        } else {
+            &self.options
+        }
+    }
+
     fn device_name(&self) -> Option<String> {
         if let Some(number) = self.number {
             Some(format!("{}{}", self.mode, number))
@@ -110,18 +123,18 @@ impl OpenOptions {
     }
 
     #[cfg(target_os = "linux")]
-    fn open(&self) -> Result<(File, String)> {
-        let file = self.options.open("/dev/net/tun")?;
+    fn open(&mut self) -> Result<(File, String)> {
+        let file = self.options().open("/dev/net/tun")?;
         let filename = interface::Request::with_flags(self.device_name(), self.flags())
             .set_tuntap(file.as_raw_fd())?;
         Ok((file, filename))
     }
 
     #[cfg(target_os = "openbsd")]
-    fn open(&self) -> Result<(File, String)> {
+    fn open(&mut self) -> Result<(File, String)> {
         if let Some(filename) = self.device_name() {
             let path = std::path::Path::new("/dev").join(&filename);
-            let file = self.options.open(path)?;
+            let file = self.options().open(path)?;
             Ok((file, filename))
         } else {
             panic!("Unknown device number.")
