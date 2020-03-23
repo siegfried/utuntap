@@ -1,6 +1,6 @@
 # Universal TunTap
 
-A low level Rust library for Tun/Tap devices.
+This library aims to provide unified APIs to open Tun/Tap devices on different OSes. It is runtime-agnostic so that you can create your cross-platform wrappers for `Tokio`, `async-std` and so on.
 
 ## Usage
 
