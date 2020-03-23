@@ -173,8 +173,7 @@ impl OpenOptions {
     /// This function will return an error under a number of different
     /// circumstances. Some of these error conditions are listed here, together
     /// with their [`ErrorKind`]. The mapping to [`ErrorKind`]s is not part of
-    /// the compatibility contract of the function, especially the `Other` kind
-    /// might change to more specific kinds in the future.
+    /// the compatibility contract of the function.
     ///
     /// * [`NotFound`]: The device file does not exist.
     /// * [`PermissionDenied`]: The user lacks permission to get the specified
