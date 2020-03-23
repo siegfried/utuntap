@@ -23,7 +23,7 @@ use std::io::Result;
 ///
 /// # Examples
 ///
-/// Opening device tun0:
+/// Opening device `tun0`:
 ///
 /// ```no_run
 /// use utuntap::tun::OpenOptions;
@@ -31,7 +31,7 @@ use std::io::Result;
 /// let (file, filename) = OpenOptions::new().number(0).open().unwrap();
 /// ```
 ///
-/// Opening device tun0 with non-blocking I/O set:
+/// Opening device `tun0` with non-blocking I/O set:
 ///
 /// ```no_run
 /// use utuntap::tun::OpenOptions;
@@ -127,7 +127,7 @@ impl OpenOptions {
     /// Sets the option for device number.
     ///
     /// This option will indicate the number part of the device name,
-    /// e.g. 0 of tun0.
+    /// e.g. `0` of `tun0`.
     ///
     /// * On Linux, when it is not set, the OS will assign a name for you
     /// * On OpenBSD, it is required, otherwise it will panic
