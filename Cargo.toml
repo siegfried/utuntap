@@ -1,6 +1,6 @@
 [package]
 name = "utuntap"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["siegfried <zhiqiang.lei@gmail.com>"]
 edition = "2018"
 homepage = "https://github.com/siegfried/utuntap"
