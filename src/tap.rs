@@ -1,3 +1,5 @@
+//! APIs for level 2 Tap devices
+
 use super::Mode;
 use std::fs::File;
 use std::io::Result;
