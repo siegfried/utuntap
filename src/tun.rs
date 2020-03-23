@@ -1,3 +1,5 @@
+//! APIs for level 3 Tun devices
+
 use super::Mode;
 use std::fs::File;
 use std::io::Result;
