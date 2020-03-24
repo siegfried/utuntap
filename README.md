@@ -6,7 +6,7 @@ This library aims to provide robust, well-tested, unified APIs to open Tun/Tap d
 
 ## Usage
 
-It simply provides more options to open Tun/Tap device files. More options are listed in the [documentation](https://crates.io/crates/utuntap).
+It simply provides options to open Tun/Tap device files. More options are listed in the [documentation](https://crates.io/crates/utuntap).
 
 ```rust
 use utuntap::tun;
