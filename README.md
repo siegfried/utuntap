@@ -1,8 +1,8 @@
-# Universal TunTap
+# Universal Tun/Tap for Rust
 
 [![Crates.io](https://img.shields.io/crates/v/utuntap)](https://crates.io/crates/utuntap)
 
-This library aims to provide unified APIs to open Tun/Tap devices on different OSes. It is runtime-agnostic so that you can create your cross-platform wrappers for `Tokio`, `async-std` and so on.
+This library aims to provide unified APIs to open Tun/Tap devices on different OSes. It is runtime-agnostic so that you can create your cross-platform wrappers for [Tokio](https://tokio.rs), [async-std](https://github.com/async-rs/async-std) and so on.
 
 ## Usage
 
