@@ -23,5 +23,5 @@ let (mut file, filename) = tun::OpenOptions::new()
 
 | OS | Status | Comment |
 | -- | ------ | ------- |
-| Linux | [![Build Status](https://travis-ci.org/siegfried/utuntap.svg?branch=master)](https://travis-ci.org/siegfried/utuntap) | musl is also supported |
-| OpenBSD | [![builds.sr.ht status](https://builds.sr.ht/~siegfried/utuntap/.build.yml.svg)](https://builds.sr.ht/~siegfried/utuntap/.build.yml?) |
+| Linux | [![Build Status](https://travis-ci.org/siegfried/utuntap.svg?branch=master)](https://travis-ci.org/siegfried/utuntap) | `musl` is also supported. |
+| OpenBSD | [![builds.sr.ht status](https://builds.sr.ht/~siegfried/utuntap/.build.yml.svg)](https://builds.sr.ht/~siegfried/utuntap/.build.yml?) | According to the [manual](https://man.openbsd.org/tun.4), each packet read or written is prefixed with a tunnel header consisting of a 4-byte network byte order integer containing the address family. The values are listed [here](https://man.openbsd.org/netintro.4#ADDRESSING). |
