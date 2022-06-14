@@ -1,8 +1,8 @@
 [package]
 name = "utuntap"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["siegfried <zhiqiang.lei@gmail.com>"]
-edition = "2018"
+edition = "2021"
 homepage = "https://github.com/siegfried/utuntap"
 repository = "https://github.com/siegfried/utuntap.git"
 readme = "README.md"

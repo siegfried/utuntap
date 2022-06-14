@@ -214,7 +214,7 @@ checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
 
 [[package]]
 name = "utuntap"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "etherparse",
  "libc",
