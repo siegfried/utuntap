@@ -23,10 +23,20 @@ enum Mode {
 }
 
 impl fmt::Display for Mode {
+    #[cfg(not(target_os = "macos"))]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let text = match self {
             Mode::Tap => "tap",
             Mode::Tun => "tun",
+        };
+        write!(f, "{}", text)
+    }
+
+    #[cfg(target_os = "macos")]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let text = match self {
+            Mode::Tap => unimplemented!("TAP is not supported on macOS"),
+            Mode::Tun => "utun",
         };
         write!(f, "{}", text)
     }
@@ -181,7 +191,7 @@ impl OpenOptions {
                 sc_family: AF_SYSTEM,
                 ss_sysaddr: AF_SYS_CONTROL,
                 sc_id: info.ctl_id,
-                sc_unit: u32::from(self.number.expect("missing device number") + 1),
+                sc_unit: u32::from(self.number.expect("missing device number")),
                 sc_reserved: [0; 5],
             };
 
@@ -225,7 +235,7 @@ impl OpenOptions {
             unsafe { File::from_raw_fd(fd) }
         };
 
-        Ok((file, "/dev/utun0".into()))
+        Ok((file, self.device_name().unwrap()))
     }
 }
 
