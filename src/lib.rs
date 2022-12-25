@@ -140,6 +140,93 @@ impl OpenOptions {
             panic!("Unknown device number.")
         }
     }
+
+    #[cfg(target_os = "macos")]
+    fn open(&mut self) -> Result<(File, String)> {
+        use std::{io::Error, os::fd::FromRawFd, mem, ffi::{c_uchar, c_ushort}};
+        use libc::{socket, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL, ioctl, c_ulong, connect, sockaddr, socklen_t, sockaddr_ctl, getsockopt, UTUN_OPT_IFNAME, c_void, fcntl, F_SETFD, FD_CLOEXEC, F_SETFL, O_NONBLOCK};
+        const AF_SYSTEM: c_uchar = 32;
+        const AF_SYS_CONTROL: c_ushort = 2;
+        const CTLIOCGINFO: c_ulong = 0xc0644e03;
+        const UTUN_CONTROL_NAME: &'static str = "com.apple.net.utun_control";
+
+        let file = {
+            let fd = unsafe { socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL) };
+            if fd < 0 {
+                return Err(Error::last_os_error());
+            }
+
+            #[repr(C)]
+            pub struct ctl_info {
+                pub ctl_id: u32,
+                pub ctl_name: [u8; 96],
+            }
+
+            let mut info = ctl_info {
+                ctl_id: 0,
+                ctl_name: {
+                    let mut buffer = [0u8; 96];
+                    buffer[..UTUN_CONTROL_NAME.len()].clone_from_slice(UTUN_CONTROL_NAME.as_bytes());
+                    buffer
+                },
+            };
+
+            let err = unsafe { ioctl(fd, CTLIOCGINFO, &mut info) };
+            if err != 0 {
+                return Err(Error::last_os_error());
+            }
+
+            let addr = sockaddr_ctl {
+                sc_len: mem::size_of::<sockaddr_ctl>() as u8,
+                sc_family: AF_SYSTEM,
+                ss_sysaddr: AF_SYS_CONTROL,
+                sc_id: info.ctl_id,
+                sc_unit: u32::from(self.number.expect("missing device number") + 1),
+                sc_reserved: [0; 5],
+            };
+
+            // If connect() is successful, a tun%d device will be created, where "%d"
+            // is our sc_unit-1
+            let err = unsafe {
+                let addr_ptr = &addr as *const sockaddr_ctl;
+                connect(fd,
+                        addr_ptr as *const sockaddr,
+                        mem::size_of_val(&addr) as socklen_t)
+            };
+            if err != 0 {
+                return Err(Error::last_os_error());
+            }
+
+            let mut name_buf = [0u8; 64];
+            let mut name_length: socklen_t = 64;
+            let err = unsafe {
+                getsockopt(fd,
+                           SYSPROTO_CONTROL,
+                           UTUN_OPT_IFNAME,
+                           &mut name_buf as *mut _ as *mut c_void,
+                           &mut name_length as *mut socklen_t)
+            };
+            if err != 0 {
+                return Err(Error::last_os_error());
+            }
+
+            let err = unsafe { fcntl(fd, F_SETFD, FD_CLOEXEC) };
+            if err != 0 {
+                return Err(Error::last_os_error());
+            }
+
+            if self.nonblock {
+                let err = unsafe { fcntl(fd, F_SETFL, O_NONBLOCK) };
+                if err != 0 {
+                    return Err(Error::last_os_error());
+                }
+            }
+
+            unsafe { File::from_raw_fd(fd) }
+        };
+
+        Ok((file, "/dev/utun0".into()))
+    }
 }
 
 pub mod tap;
