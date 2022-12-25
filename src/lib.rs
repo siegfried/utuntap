@@ -195,8 +195,6 @@ impl OpenOptions {
                 sc_reserved: [0; 5],
             };
 
-            // If connect() is successful, a tun%d device will be created, where "%d"
-            // is our sc_unit-1
             let err = unsafe {
                 let addr_ptr = &addr as *const sockaddr_ctl;
                 connect(fd,
