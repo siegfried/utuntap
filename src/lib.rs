@@ -191,6 +191,7 @@ impl OpenOptions {
                 sc_family: AF_SYSTEM,
                 ss_sysaddr: AF_SYS_CONTROL,
                 sc_id: info.ctl_id,
+                // Some says the number is sc_unit, some says it is sc_unit - 1
                 sc_unit: u32::from(self.number.expect("missing device number")),
                 sc_reserved: [0; 5],
             };
