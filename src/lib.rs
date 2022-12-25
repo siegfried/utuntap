@@ -160,6 +160,10 @@ impl OpenOptions {
         const CTLIOCGINFO: c_ulong = 0xc0644e03;
         const UTUN_CONTROL_NAME: &'static str = "com.apple.net.utun_control";
 
+        if let Mode::Tap = self.mode {
+            unimplemented!("TAP mode is not supported on macOS")
+        }
+
         let file = {
             let fd = unsafe { socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL) };
             if fd < 0 {
