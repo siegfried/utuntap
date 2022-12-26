@@ -6,15 +6,11 @@ extern crate nix;
 #[path = "interface/linux.rs"]
 mod interface;
 
-#[cfg(target_os = "linux")]
-use interface::Flags;
-use std::fmt;
-use std::fs::{self, File};
-use std::io::Result;
 #[cfg(target_family = "unix")]
-use std::os::unix::fs::OpenOptionsExt;
-#[cfg(target_os = "linux")]
-use std::os::unix::io::AsRawFd;
+use libc::O_NONBLOCK;
+use std::fmt;
+use std::fs::File;
+use std::io::Result;
 
 #[derive(Debug, PartialEq)]
 enum Mode {
@@ -43,9 +39,10 @@ impl fmt::Display for Mode {
 }
 
 struct OpenOptions {
-    options: fs::OpenOptions,
     mode: Mode,
     number: Option<u8>,
+    read: bool,
+    write: bool,
     #[cfg(target_family = "unix")]
     nonblock: bool,
     #[cfg(target_os = "linux")]
@@ -54,12 +51,11 @@ struct OpenOptions {
 
 impl OpenOptions {
     fn new() -> Self {
-        let mut options = fs::OpenOptions::new();
-        options.read(true).write(true);
-        OpenOptions {
-            options,
+        Self {
             mode: Mode::Tun,
             number: None,
+            read: true,
+            write: true,
             #[cfg(target_family = "unix")]
             nonblock: false,
             #[cfg(target_os = "linux")]
@@ -67,24 +63,24 @@ impl OpenOptions {
         }
     }
 
-    fn read(&mut self, value: bool) -> &mut Self {
-        self.options.read(value);
+    fn read(&mut self, enabled: bool) -> &mut Self {
+        self.read = enabled;
         self
     }
 
-    fn write(&mut self, value: bool) -> &mut Self {
-        self.options.write(value);
+    fn write(&mut self, enabled: bool) -> &mut Self {
+        self.write = enabled;
         self
     }
 
     #[cfg(target_family = "unix")]
-    fn nonblock(&mut self, value: bool) -> &mut Self {
-        self.nonblock = value;
+    fn nonblock(&mut self, enabled: bool) -> &mut Self {
+        self.nonblock = enabled;
         self
     }
 
-    fn mode(&mut self, value: Mode) -> &mut Self {
-        self.mode = value;
+    fn mode(&mut self, mode: Mode) -> &mut Self {
+        self.mode = mode;
         self
     }
 
@@ -94,34 +90,9 @@ impl OpenOptions {
     }
 
     #[cfg(target_os = "linux")]
-    fn packet_info(&mut self, value: bool) -> &mut Self {
-        self.packet_info = value;
+    fn packet_info(&mut self, enabled: bool) -> &mut Self {
+        self.packet_info = enabled;
         self
-    }
-
-    #[cfg(target_os = "linux")]
-    fn flags(&self) -> Flags {
-        const IFF_TUN: Flags = 0x0001;
-        const IFF_TAP: Flags = 0x0002;
-        const IFF_NO_PI: Flags = 0x1000;
-
-        let mut flags = match self.mode {
-            Mode::Tun => IFF_TUN,
-            Mode::Tap => IFF_TAP,
-        };
-        if !self.packet_info {
-            flags |= IFF_NO_PI;
-        }
-        flags
-    }
-
-    #[cfg(target_family = "unix")]
-    fn options(&mut self) -> &fs::OpenOptions {
-        if self.nonblock {
-            self.options.custom_flags(libc::O_NONBLOCK)
-        } else {
-            &self.options
-        }
     }
 
     fn device_name(&self) -> Option<String> {
@@ -134,27 +105,77 @@ impl OpenOptions {
 
     #[cfg(target_os = "linux")]
     fn open(&mut self) -> Result<(File, String)> {
-        let file = self.options().open("/dev/net/tun")?;
-        let filename = interface::Request::with_flags(self.device_name(), self.flags())
-            .set_tuntap(file.as_raw_fd())?;
+        use std::os::unix::fs::OpenOptionsExt;
+        use std::os::unix::io::AsRawFd;
+
+        let file = {
+            let mut options = std::fs::OpenOptions::new();
+
+            options.read(self.read).write(self.write);
+            if self.nonblock {
+                options.custom_flags(O_NONBLOCK);
+            }
+
+            options.open("/dev/net/tun")?
+        };
+        let filename = {
+            use interface::Flags;
+
+            let flags = {
+                const IFF_TUN: Flags = 0x0001;
+                const IFF_TAP: Flags = 0x0002;
+                const IFF_NO_PI: Flags = 0x1000;
+
+                let mut flags = match self.mode {
+                    Mode::Tun => IFF_TUN,
+                    Mode::Tap => IFF_TAP,
+                };
+                if !self.packet_info {
+                    flags |= IFF_NO_PI;
+                }
+                flags
+            };
+
+            interface::Request::with_flags(self.device_name(), flags)
+                .set_tuntap(file.as_raw_fd())?
+        };
         Ok((file, filename))
     }
 
     #[cfg(target_os = "openbsd")]
     fn open(&mut self) -> Result<(File, String)> {
-        if let Some(filename) = self.device_name() {
+        use std::os::unix::fs::OpenOptionsExt;
+
+        let filename = self.device_name().expect("Unknown device number.");
+
+        let file = {
+            let mut options = std::fs::OpenOptions::new();
+
+            options.read(self.read).write(self.write);
+            if self.nonblock {
+                options.custom_flags(O_NONBLOCK);
+            }
+
             let path = std::path::Path::new("/dev").join(&filename);
-            let file = self.options().open(path)?;
-            Ok((file, filename))
-        } else {
-            panic!("Unknown device number.")
-        }
+            options.open(path)?
+        };
+
+        Ok((file, filename))
     }
 
     #[cfg(target_os = "macos")]
     fn open(&mut self) -> Result<(File, String)> {
-        use std::{io::Error, os::fd::FromRawFd, mem, ffi::{c_uchar, c_ushort}};
-        use libc::{socket, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL, ioctl, c_ulong, connect, sockaddr, socklen_t, sockaddr_ctl, getsockopt, UTUN_OPT_IFNAME, c_void, fcntl, F_SETFD, FD_CLOEXEC, F_SETFL, O_NONBLOCK};
+        use libc::{
+            c_ulong, c_void, connect, fcntl, getsockopt, ioctl, sockaddr, sockaddr_ctl, socket,
+            socklen_t, FD_CLOEXEC, F_SETFD, F_SETFL, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL,
+            UTUN_OPT_IFNAME,
+        };
+        use std::{
+            ffi::{c_uchar, c_ushort},
+            io::Error,
+            mem,
+            os::fd::FromRawFd,
+        };
         const AF_SYSTEM: c_uchar = 32;
         const AF_SYS_CONTROL: c_ushort = 2;
         const CTLIOCGINFO: c_ulong = 0xc0644e03;
@@ -180,7 +201,8 @@ impl OpenOptions {
                 ctl_id: 0,
                 ctl_name: {
                     let mut buffer = [0u8; 96];
-                    buffer[..UTUN_CONTROL_NAME.len()].clone_from_slice(UTUN_CONTROL_NAME.as_bytes());
+                    buffer[..UTUN_CONTROL_NAME.len()]
+                        .clone_from_slice(UTUN_CONTROL_NAME.as_bytes());
                     buffer
                 },
             };
@@ -202,9 +224,11 @@ impl OpenOptions {
 
             let err = unsafe {
                 let addr_ptr = &addr as *const sockaddr_ctl;
-                connect(fd,
-                        addr_ptr as *const sockaddr,
-                        mem::size_of_val(&addr) as socklen_t)
+                connect(
+                    fd,
+                    addr_ptr as *const sockaddr,
+                    mem::size_of_val(&addr) as socklen_t,
+                )
             };
             if err != 0 {
                 return Err(Error::last_os_error());
@@ -213,11 +237,13 @@ impl OpenOptions {
             let mut name_buf = [0u8; 64];
             let mut name_length: socklen_t = 64;
             let err = unsafe {
-                getsockopt(fd,
-                           SYSPROTO_CONTROL,
-                           UTUN_OPT_IFNAME,
-                           &mut name_buf as *mut _ as *mut c_void,
-                           &mut name_length as *mut socklen_t)
+                getsockopt(
+                    fd,
+                    SYSPROTO_CONTROL,
+                    UTUN_OPT_IFNAME,
+                    &mut name_buf as *mut _ as *mut c_void,
+                    &mut name_length as *mut socklen_t,
+                )
             };
             if err != 0 {
                 return Err(Error::last_os_error());
@@ -239,6 +265,12 @@ impl OpenOptions {
         };
 
         Ok((file, self.device_name().unwrap()))
+    }
+}
+
+impl Default for OpenOptions {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

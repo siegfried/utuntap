@@ -24,9 +24,9 @@ type RequestId = libc::c_ulong;
 
 impl Request {
     pub fn with_flags(device_name: Option<String>, flags: Flags) -> Self {
-        Request {
+        Self {
             name: name(device_name),
-            union: RequestUnion { flags: flags },
+            union: RequestUnion { flags },
         }
     }
 
