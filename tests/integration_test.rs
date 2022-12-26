@@ -153,7 +153,7 @@ fn tun_sents_packets() {
     assert_eq!(&buffer[..4], [0u8, 0, 0, 2]);
     let packet = &buffer[4..number];
     if let PacketHeaders {
-        ip: Some(IpHeader::Version4(ip_header)),
+        ip: Some(IpHeader::Version4(ip_header, _)),
         transport: Some(TransportHeader::Udp(udp_header)),
         payload,
         ..
