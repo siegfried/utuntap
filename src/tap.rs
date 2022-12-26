@@ -64,7 +64,7 @@ impl OpenOptions {
     pub fn new() -> Self {
         let mut options = super::OpenOptions::new();
         options.mode(Mode::Tap);
-        OpenOptions { options }
+        Self { options }
     }
 
     /// Sets the option for read access.
