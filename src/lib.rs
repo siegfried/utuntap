@@ -2,10 +2,6 @@
 #[macro_use]
 extern crate nix;
 
-#[cfg(target_os = "linux")]
-#[path = "interface/linux.rs"]
-mod interface;
-
 #[cfg(target_family = "unix")]
 use libc::O_NONBLOCK;
 use std::fmt;
@@ -95,14 +91,6 @@ impl OpenOptions {
         self
     }
 
-    fn device_name(&self) -> Option<String> {
-        if let Some(number) = self.number {
-            Some(format!("{}{}", self.mode, number))
-        } else {
-            None
-        }
-    }
-
     #[cfg(target_os = "linux")]
     fn open(&mut self) -> Result<(File, String)> {
         use std::os::unix::fs::OpenOptionsExt;
@@ -119,25 +107,53 @@ impl OpenOptions {
             options.open("/dev/net/tun")?
         };
         let filename = {
-            use interface::Flags;
-
-            let flags = {
-                const IFF_TUN: Flags = 0x0001;
-                const IFF_TAP: Flags = 0x0002;
-                const IFF_NO_PI: Flags = 0x1000;
-
-                let mut flags = match self.mode {
-                    Mode::Tun => IFF_TUN,
-                    Mode::Tap => IFF_TAP,
-                };
-                if !self.packet_info {
-                    flags |= IFF_NO_PI;
-                }
-                flags
+            use libc::{__c_anonymous_ifr_ifru, c_int, c_short, ifreq, ioctl, strcpy};
+            use std::{
+                ffi::{CStr, CString},
+                mem,
             };
 
-            interface::Request::with_flags(self.device_name(), flags)
-                .set_tuntap(file.as_raw_fd())?
+            const IFF_TUN: c_short = 0x0001;
+            const IFF_TAP: c_short = 0x0002;
+            const IFF_NO_PI: c_short = 0x1000;
+            #[cfg(target_env = "musl")]
+            type RequestId = c_int;
+            #[cfg(not(target_env = "musl"))]
+            type RequestId = libc::c_ulong;
+            const TUNSETIFF: RequestId = request_code_write!(b'T', 202, mem::size_of::<c_int>());
+
+            let mut request = ifreq {
+                ifr_name: [0; 16],
+                ifr_ifru: __c_anonymous_ifr_ifru {
+                    ifru_flags: {
+                        let mut flags = match self.mode {
+                            Mode::Tun => IFF_TUN,
+                            Mode::Tap => IFF_TAP,
+                        };
+                        if !self.packet_info {
+                            flags |= IFF_NO_PI;
+                        }
+                        flags
+                    },
+                },
+            };
+
+            if let Some(number) = self.number {
+                let device_name = CString::new(format!("{}{}", self.mode, number))
+                    .expect("Failed to build device name");
+                unsafe {
+                    strcpy(request.ifr_name.as_mut_ptr(), device_name.as_ptr());
+                }
+            }
+
+            unsafe { ioctl(file.as_raw_fd(), TUNSETIFF, &mut request) };
+
+            let filename = {
+                let cstr = unsafe { CStr::from_ptr(request.ifr_name.as_ptr()) };
+                String::from_utf8_lossy(cstr.to_bytes()).to_string()
+            };
+
+            filename
         };
         Ok((file, filename))
     }
@@ -146,7 +162,10 @@ impl OpenOptions {
     fn open(&mut self) -> Result<(File, String)> {
         use std::os::unix::fs::OpenOptionsExt;
 
-        let filename = self.device_name().expect("Unknown device number.");
+        let filename = {
+            let number = self.number.expect("Unknown device number");
+            format!("{}{}", self.mode, number)
+        };
 
         let file = {
             let mut options = std::fs::OpenOptions::new();
@@ -264,7 +283,7 @@ impl OpenOptions {
             unsafe { File::from_raw_fd(fd) }
         };
 
-        Ok((file, self.device_name().unwrap()))
+        Ok((file, "".into()))
     }
 }
 
@@ -310,16 +329,5 @@ mod tests {
         assert_eq!(options.packet_info, true);
         options.packet_info(false);
         assert_eq!(options.packet_info, false);
-    }
-
-    #[test]
-    fn display_device_name() {
-        let mut options = OpenOptions::new();
-        assert_eq!(options.device_name(), None);
-        options.mode(Mode::Tun);
-        options.number(0);
-        assert_eq!(options.device_name(), Some("tun0".into()));
-        options.mode(Mode::Tap);
-        assert_eq!(options.device_name(), Some("tap0".into()));
     }
 }
