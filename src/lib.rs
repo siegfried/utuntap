@@ -123,7 +123,7 @@ impl OpenOptions {
             const TUNSETIFF: RequestId = request_code_write!(b'T', 202, mem::size_of::<c_int>());
 
             let mut request = ifreq {
-                ifr_name: [0; 16],
+                ifr_name: Default::default(),
                 ifr_ifru: __c_anonymous_ifr_ifru {
                     ifru_flags: {
                         let mut flags = match self.mode {
