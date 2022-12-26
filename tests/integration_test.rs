@@ -10,12 +10,10 @@ use utuntap::{tap, tun};
 #[test]
 #[serial]
 fn tun_sents_packets() {
-    let (mut file, filename) = tun::OpenOptions::new()
+    let mut file = tun::OpenOptions::new()
         .packet_info(false)
-        .number(10)
-        .open()
+        .open(10)
         .expect("failed to open device");
-    assert_eq!(filename, "tun10");
     let data = [1; 10];
     let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
     socket
@@ -46,12 +44,10 @@ fn tun_sents_packets() {
 #[test]
 #[serial]
 fn tun_sents_packets_with_packet_info() {
-    let (mut file, filename) = tun::OpenOptions::new()
+    let mut file = tun::OpenOptions::new()
         .packet_info(true)
-        .number(10)
-        .open()
+        .open(10)
         .expect("failed to open device");
-    assert_eq!(filename, "tun10");
     let data = [1; 10];
     let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
     socket
@@ -83,12 +79,10 @@ fn tun_sents_packets_with_packet_info() {
 #[test]
 #[serial]
 fn tun_receives_packets() {
-    let (mut file, filename) = tun::OpenOptions::new()
+    let mut file = tun::OpenOptions::new()
         .packet_info(false)
-        .number(10)
-        .open()
+        .open(10)
         .expect("failed to open device");
-    assert_eq!(filename, "tun10");
     let data = [1; 10];
     let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
     let builder = PacketBuilder::ipv4([10, 10, 10, 2], [10, 10, 10, 1], 20).udp(4242, 2424);
@@ -114,12 +108,10 @@ fn tun_receives_packets() {
 #[test]
 #[serial]
 fn tun_receives_packets_with_packet_info() {
-    let (mut file, filename) = tun::OpenOptions::new()
+    let mut file = tun::OpenOptions::new()
         .packet_info(true)
-        .number(10)
-        .open()
+        .open(10)
         .expect("failed to open device");
-    assert_eq!(filename, "tun10");
     let data = [1; 10];
     let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
     let builder = PacketBuilder::ipv4([10, 10, 10, 2], [10, 10, 10, 1], 20).udp(4242, 2424);
@@ -147,11 +139,9 @@ fn tun_receives_packets_with_packet_info() {
 #[test]
 #[serial]
 fn tun_sents_packets() {
-    let (mut file, filename) = tun::OpenOptions::new()
-        .number(10)
-        .open()
+    let mut file = tun::OpenOptions::new()
+        .open(10)
         .expect("failed to open device");
-    assert_eq!(filename, "tun10");
     let data = [1; 10];
     let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
     socket
@@ -183,11 +173,9 @@ fn tun_sents_packets() {
 #[test]
 #[serial]
 fn tun_receives_packets() {
-    let (mut file, filename) = tun::OpenOptions::new()
-        .number(10)
-        .open()
+    let mut file = tun::OpenOptions::new()
+        .open(10)
         .expect("failed to open device");
-    assert_eq!(filename, "tun10");
     let data = [1; 10];
     let socket = UdpSocket::bind("10.10.10.1:2424").expect("failed to bind to address");
     let builder = PacketBuilder::ipv4([10, 10, 10, 2], [10, 10, 10, 1], 20).udp(4242, 2424);
@@ -215,14 +203,12 @@ fn tun_receives_packets() {
 #[test]
 #[serial]
 fn tun_non_blocking_io() {
-    let (mut file, filename) = tun::OpenOptions::new()
+    let mut file = tun::OpenOptions::new()
         .nonblock(true)
-        .number(11)
-        .open()
+        .open(11)
         .expect("failed to open device");
-    assert_eq!(filename, "tun11");
     let mut buffer = [0; 10];
-    while file.read(&mut buffer).is_ok() {};
+    while file.read(&mut buffer).is_ok() {}
     let error = file.read(&mut buffer).err().unwrap();
     assert_eq!(error.kind(), ErrorKind::WouldBlock);
 }
@@ -231,14 +217,12 @@ fn tun_non_blocking_io() {
 #[test]
 #[serial]
 fn tap_non_blocking_io() {
-    let (mut file, filename) = tap::OpenOptions::new()
+    let mut file = tap::OpenOptions::new()
         .nonblock(true)
-        .number(11)
-        .open()
+        .open(11)
         .expect("failed to open device");
-    assert_eq!(filename, "tap11");
     let mut buffer = [0; 10];
-    while file.read(&mut buffer).is_ok() {};
+    while file.read(&mut buffer).is_ok() {}
     let error = file.read(&mut buffer).err().unwrap();
     assert_eq!(error.kind(), ErrorKind::WouldBlock);
 }

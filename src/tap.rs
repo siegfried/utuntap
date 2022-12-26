@@ -30,7 +30,7 @@ use std::io::Result;
 /// ```no_run
 /// use utuntap::tap::OpenOptions;
 ///
-/// let (file, filename) = OpenOptions::new().number(0).open().unwrap();
+/// let file = OpenOptions::new().open(0).unwrap();
 /// ```
 ///
 /// Opening device `tap0` with non-blocking I/O set:
@@ -38,10 +38,9 @@ use std::io::Result;
 /// ```no_run
 /// use utuntap::tap::OpenOptions;
 ///
-/// let (file, filename) = OpenOptions::new()
+/// let file = OpenOptions::new()
 ///             .nonblock(true)
-///             .number(0)
-///             .open()
+///             .open(0)
 ///             .unwrap();
 /// ```
 pub struct OpenOptions {
@@ -59,7 +58,7 @@ impl OpenOptions {
     /// use utuntap::tap::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.number(0).open().unwrap();
+    /// let file = options.open(0).unwrap();
     /// ```
     pub fn new() -> Self {
         let mut options = super::OpenOptions::new();
@@ -80,7 +79,7 @@ impl OpenOptions {
     /// use utuntap::tap::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.read(true).write(true).number(0).open().unwrap();
+    /// let file = options.read(true).write(true).open(0).unwrap();
     /// ```
     pub fn read(&mut self, value: bool) -> &mut Self {
         self.options.read(value);
@@ -100,7 +99,7 @@ impl OpenOptions {
     /// use utuntap::tap::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.read(true).write(true).number(0).open().unwrap();
+    /// let file = options.read(true).write(true).open(0).unwrap();
     /// ```
     pub fn write(&mut self, value: bool) -> &mut Self {
         self.options.write(value);
@@ -118,32 +117,11 @@ impl OpenOptions {
     /// use utuntap::tap::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.nonblock(true).number(0).open().unwrap();
+    /// let file = options.nonblock(true).open(0).unwrap();
     /// ```
     #[cfg(target_family = "unix")]
     pub fn nonblock(&mut self, value: bool) -> &mut Self {
         self.options.nonblock(value);
-        self
-    }
-
-    /// Sets the option for device number.
-    ///
-    /// This option will indicate the number part of the device name,
-    /// e.g. `0` of `tap0`.
-    ///
-    /// * On Linux, when it is not set, the OS will assign a name for you
-    /// * On OpenBSD, it is required, otherwise it will panic
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use utuntap::tap::OpenOptions;
-    ///
-    /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.number(0).open().unwrap();
-    /// ```
-    pub fn number(&mut self, value: u8) -> &mut Self {
-        self.options.number(value);
         self
     }
 
@@ -160,7 +138,7 @@ impl OpenOptions {
     /// use utuntap::tap::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.packet_info(true).number(0).open().unwrap();
+    /// let file = options.packet_info(true).open(0).unwrap();
     /// ```
     #[cfg(target_os = "linux")]
     pub fn packet_info(&mut self, value: bool) -> &mut Self {
@@ -169,6 +147,10 @@ impl OpenOptions {
     }
 
     /// Opens a tap device file with the options specified by `self`.
+    ///
+    /// # Arguments
+    ///
+    /// * `number` - the number of the device, e.g. the "0" of "tun0".
     ///
     /// # Errors
     ///
@@ -187,14 +169,13 @@ impl OpenOptions {
     /// use utuntap::tap::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.number(0).open().unwrap();
+    /// let file = options.open(0).unwrap();
     /// ```
     ///
     /// [`ErrorKind`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html
     /// [`NotFound`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html#variant.NotFound
     /// [`PermissionDenied`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html#variant.PermissionDenied
-    pub fn open(&mut self) -> Result<(File, String)> {
-        let (file, filename) = self.options.open()?;
-        Ok((file, filename))
+    pub fn open(&mut self, number: u32) -> Result<File> {
+        Ok(self.options.open(number)?)
     }
 }

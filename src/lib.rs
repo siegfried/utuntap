@@ -36,7 +36,6 @@ impl fmt::Display for Mode {
 
 struct OpenOptions {
     mode: Mode,
-    number: Option<u8>,
     read: bool,
     write: bool,
     #[cfg(target_family = "unix")]
@@ -49,7 +48,6 @@ impl OpenOptions {
     fn new() -> Self {
         Self {
             mode: Mode::Tun,
-            number: None,
             read: true,
             write: true,
             #[cfg(target_family = "unix")]
@@ -80,11 +78,6 @@ impl OpenOptions {
         self
     }
 
-    fn number(&mut self, value: u8) -> &mut Self {
-        self.number = Some(value);
-        self
-    }
-
     #[cfg(target_os = "linux")]
     fn packet_info(&mut self, enabled: bool) -> &mut Self {
         self.packet_info = enabled;
@@ -92,7 +85,7 @@ impl OpenOptions {
     }
 
     #[cfg(target_os = "linux")]
-    fn open(&mut self) -> Result<(File, String)> {
+    fn open(&mut self, number: u32) -> Result<File> {
         use std::os::unix::fs::OpenOptionsExt;
         use std::os::unix::io::AsRawFd;
 
@@ -106,69 +99,56 @@ impl OpenOptions {
 
             options.open("/dev/net/tun")?
         };
-        let filename = {
-            use libc::{__c_anonymous_ifr_ifru, c_int, c_short, ifreq, ioctl, strcpy};
-            use std::{
-                ffi::{CStr, CString},
-                mem,
-            };
 
-            const IFF_TUN: c_short = 0x0001;
-            const IFF_TAP: c_short = 0x0002;
-            const IFF_NO_PI: c_short = 0x1000;
-            #[cfg(target_env = "musl")]
-            type RequestId = c_int;
-            #[cfg(not(target_env = "musl"))]
-            type RequestId = libc::c_ulong;
-            const TUNSETIFF: RequestId = request_code_write!(b'T', 202, mem::size_of::<c_int>());
-
-            let mut request = ifreq {
-                ifr_name: Default::default(),
-                ifr_ifru: __c_anonymous_ifr_ifru {
-                    ifru_flags: {
-                        let mut flags = match self.mode {
-                            Mode::Tun => IFF_TUN,
-                            Mode::Tap => IFF_TAP,
-                        };
-                        if !self.packet_info {
-                            flags |= IFF_NO_PI;
-                        }
-                        flags
-                    },
-                },
-            };
-
-            if let Some(number) = self.number {
-                let device_name = CString::new(format!("{}{}", self.mode, number))
-                    .expect("Failed to build device name");
-                unsafe {
-                    strcpy(request.ifr_name.as_mut_ptr(), device_name.as_ptr());
-                }
-            }
-
-            unsafe { ioctl(file.as_raw_fd(), TUNSETIFF, &mut request) };
-
-            let filename = {
-                let cstr = unsafe { CStr::from_ptr(request.ifr_name.as_ptr()) };
-                String::from_utf8_lossy(cstr.to_bytes()).to_string()
-            };
-
-            filename
+        use libc::{__c_anonymous_ifr_ifru, c_int, c_short, ifreq, ioctl, strcpy};
+        use std::{
+            ffi::CString,
+            mem,
         };
-        Ok((file, filename))
+
+        const IFF_TUN: c_short = 0x0001;
+        const IFF_TAP: c_short = 0x0002;
+        const IFF_NO_PI: c_short = 0x1000;
+        #[cfg(target_env = "musl")]
+        type RequestId = c_int;
+        #[cfg(not(target_env = "musl"))]
+        type RequestId = libc::c_ulong;
+        const TUNSETIFF: RequestId = request_code_write!(b'T', 202, mem::size_of::<c_int>());
+
+        let mut request = ifreq {
+            ifr_name: Default::default(),
+            ifr_ifru: __c_anonymous_ifr_ifru {
+                ifru_flags: {
+                    let mut flags = match self.mode {
+                        Mode::Tun => IFF_TUN,
+                        Mode::Tap => IFF_TAP,
+                    };
+                    if !self.packet_info {
+                        flags |= IFF_NO_PI;
+                    }
+                    flags
+                },
+            },
+        };
+
+        let device_name = CString::new(format!("{}{}", self.mode, number))?;
+
+        unsafe {
+            strcpy(request.ifr_name.as_mut_ptr(), device_name.as_ptr());
+            ioctl(file.as_raw_fd(), TUNSETIFF, &mut request);
+        }
+
+        Ok(file)
     }
 
     #[cfg(target_os = "openbsd")]
-    fn open(&mut self) -> Result<(File, String)> {
+    fn open(&mut self, number: u32) -> Result<File> {
         use std::os::unix::fs::OpenOptionsExt;
-
-        let filename = {
-            let number = self.number.expect("Unknown device number");
-            format!("{}{}", self.mode, number)
-        };
 
         let file = {
             let mut options = std::fs::OpenOptions::new();
+
+            let filename = format!("{}{}", self.mode, number);
 
             options.read(self.read).write(self.write);
             if self.nonblock {
@@ -179,11 +159,11 @@ impl OpenOptions {
             options.open(path)?
         };
 
-        Ok((file, filename))
+        Ok(file)
     }
 
     #[cfg(target_os = "macos")]
-    fn open(&mut self) -> Result<(File, String)> {
+    fn open(&mut self, number: u32) -> Result<File> {
         use libc::{
             c_ulong, c_void, connect, fcntl, getsockopt, ioctl, sockaddr, sockaddr_ctl, socket,
             socklen_t, FD_CLOEXEC, F_SETFD, F_SETFL, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL,
@@ -237,7 +217,7 @@ impl OpenOptions {
                 ss_sysaddr: AF_SYS_CONTROL,
                 sc_id: info.ctl_id,
                 // Some says the number is sc_unit, some says it is sc_unit - 1
-                sc_unit: u32::from(self.number.expect("missing device number")),
+                sc_unit: number,
                 sc_reserved: [0; 5],
             };
 
@@ -283,7 +263,7 @@ impl OpenOptions {
             unsafe { File::from_raw_fd(fd) }
         };
 
-        Ok((file, "".into()))
+        Ok(file)
     }
 }
 
@@ -308,16 +288,6 @@ mod tests {
         assert_eq!(options.mode, Mode::Tap);
         options.mode(Mode::Tun);
         assert_eq!(options.mode, Mode::Tun);
-    }
-
-    #[test]
-    fn change_number() {
-        let mut options = OpenOptions::new();
-        assert_eq!(options.number, None);
-        options.number(1);
-        assert_eq!(options.number, Some(1));
-        options.number(2);
-        assert_eq!(options.number, Some(2));
     }
 
     #[cfg(target_os = "linux")]

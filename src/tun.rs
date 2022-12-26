@@ -4,46 +4,47 @@ use super::Mode;
 use std::fs::File;
 use std::io::Result;
 
-/// Options and flags which can be used to configure how a tun device file is
-/// opened.
-///
-/// This builder exposes the ability to configure how a [`std::fs::File`][file] is
-/// opened and what operations are permitted on the open file, and what `ioctl`
-/// operations should be applied to the file.
-///
-/// Generally speaking, when using `OpenOptions`, you'll first call [`new`],
-/// then chain calls to methods to set each option, then call [`open`].
-/// This will give you a [`std::io::Result`][result] with a tuple of
-/// [`std::fs::File`][file] and filename [`alloc::string::String`][string]
-/// inside that you can further operate on.
-///
-/// [`new`]: struct.OpenOptions.html#method.new
-/// [`open`]: struct.OpenOptions.html#method.open
-/// [result]: https://doc.rust-lang.org/nightly/std/io/type.Result.html
-/// [file]: https://doc.rust-lang.org/nightly/std/io/struct.File.html
-/// [string]: https://doc.rust-lang.org/nightly/alloc/string/struct.String.html
-///
-/// # Examples
-///
-/// Opening device `tun0`:
-///
-/// ```no_run
-/// use utuntap::tun::OpenOptions;
-///
-/// let (file, filename) = OpenOptions::new().number(0).open().unwrap();
-/// ```
-///
-/// Opening device `tun0` with non-blocking I/O set:
-///
-/// ```no_run
-/// use utuntap::tun::OpenOptions;
-///
-/// let (file, filename) = OpenOptions::new()
-///             .nonblock(true)
-///             .number(0)
-///             .open()
-///             .unwrap();
-/// ```
+/**
+Options and flags which can be used to configure how a tun device file is
+opened.
+
+This builder exposes the ability to configure how a [`std::fs::File`][file] is
+opened and what operations are permitted on the open file, and what `ioctl`
+operations should be applied to the file.
+
+Generally speaking, when using `OpenOptions`, you'll first call [`new`],
+then chain calls to methods to set each option, then call [`open`].
+This will give you a [`std::io::Result`][result] with a tuple of
+[`std::fs::File`][file] and filename [`alloc::string::String`][string]
+inside that you can further operate on.
+
+[`new`]: struct.OpenOptions.html#method.new
+[`open`]: struct.OpenOptions.html#method.open
+[result]: https://doc.rust-lang.org/nightly/std/io/type.Result.html
+[file]: https://doc.rust-lang.org/nightly/std/io/struct.File.html
+[string]: https://doc.rust-lang.org/nightly/alloc/string/struct.String.html
+
+# Examples
+
+Opening device `tun0`:
+
+```no_run
+use utuntap::tun::OpenOptions;
+
+let file = OpenOptions::new().open(0).unwrap();
+```
+
+Opening device `tun0` with non-blocking I/O set:
+
+```no_run
+use utuntap::tun::OpenOptions;
+
+let file = OpenOptions::new()
+            .nonblock(true)
+            .open(0)
+            .unwrap();
+```
+*/
 pub struct OpenOptions {
     options: super::OpenOptions,
 }
@@ -59,7 +60,7 @@ impl OpenOptions {
     /// use utuntap::tun::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.number(0).open().unwrap();
+    /// let file = options.open(0).unwrap();
     /// ```
     pub fn new() -> Self {
         let mut options = super::OpenOptions::new();
@@ -80,7 +81,7 @@ impl OpenOptions {
     /// use utuntap::tun::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.read(true).write(true).number(0).open().unwrap();
+    /// let file = options.read(true).write(true).open(0).unwrap();
     /// ```
     pub fn read(&mut self, value: bool) -> &mut Self {
         self.options.read(value);
@@ -100,7 +101,7 @@ impl OpenOptions {
     /// use utuntap::tun::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.read(true).write(true).number(0).open().unwrap();
+    /// let file = options.read(true).write(true).open(0).unwrap();
     /// ```
     pub fn write(&mut self, value: bool) -> &mut Self {
         self.options.write(value);
@@ -118,32 +119,11 @@ impl OpenOptions {
     /// use utuntap::tun::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.nonblock(true).number(0).open().unwrap();
+    /// let file = options.nonblock(true).open(0).unwrap();
     /// ```
     #[cfg(target_family = "unix")]
     pub fn nonblock(&mut self, value: bool) -> &mut Self {
         self.options.nonblock(value);
-        self
-    }
-
-    /// Sets the option for device number.
-    ///
-    /// This option will indicate the number part of the device name,
-    /// e.g. `0` of `tun0`.
-    ///
-    /// * On Linux, when it is not set, the OS will assign a name for you
-    /// * On OpenBSD, it is required, otherwise it will panic
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use utuntap::tun::OpenOptions;
-    ///
-    /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.number(0).open().unwrap();
-    /// ```
-    pub fn number(&mut self, value: u8) -> &mut Self {
-        self.options.number(value);
         self
     }
 
@@ -160,7 +140,7 @@ impl OpenOptions {
     /// use utuntap::tun::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.packet_info(true).number(0).open().unwrap();
+    /// let file = options.packet_info(true).open(0).unwrap();
     /// ```
     #[cfg(target_os = "linux")]
     pub fn packet_info(&mut self, value: bool) -> &mut Self {
@@ -169,6 +149,10 @@ impl OpenOptions {
     }
 
     /// Opens a tun device file with the options specified by `self`.
+    ///
+    /// # Arguments
+    ///
+    /// * `number` - the number of the device, e.g. the "0" of "tun0".
     ///
     /// # Errors
     ///
@@ -187,14 +171,13 @@ impl OpenOptions {
     /// use utuntap::tun::OpenOptions;
     ///
     /// let mut options = OpenOptions::new();
-    /// let (file, filename) = options.number(0).open().unwrap();
+    /// let file = options.open(0).unwrap();
     /// ```
     ///
     /// [`ErrorKind`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html
     /// [`NotFound`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html#variant.NotFound
     /// [`PermissionDenied`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html#variant.PermissionDenied
-    pub fn open(&mut self) -> Result<(File, String)> {
-        let (file, filename) = self.options.open()?;
-        Ok((file, filename))
+    pub fn open(&mut self, number: u32) -> Result<File> {
+        Ok(self.options.open(number)?)
     }
 }
