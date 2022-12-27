@@ -1,7 +1,9 @@
 //! APIs for level 2 Tap devices
 
 use super::Mode;
+#[cfg(not(target_os = "macos"))]
 use std::fs::File;
+#[cfg(not(target_os = "macos"))]
 use std::io::Result;
 
 /**
