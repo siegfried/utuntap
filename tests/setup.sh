@@ -30,7 +30,14 @@ case $OS in
         cd -
         ;;
     "Darwin")
-        echo "macOS: make sure there is not utun10"
+        ifconfig utun10
+        if [ $? == 0 ]
+        then
+            echo "Error: utun10 exists" $OS >&2
+            exit 1
+        else
+            echo "Start testing..."
+        fi
         ;;
     *)
         printf "%s is not supported.\n" $OS >&2
