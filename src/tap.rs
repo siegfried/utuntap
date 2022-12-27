@@ -1,9 +1,7 @@
 //! APIs for level 2 Tap devices
 
 use super::Mode;
-#[cfg(not(target_os = "macos"))]
 use std::fs::File;
-#[cfg(not(target_os = "macos"))]
 use std::io::Result;
 
 /**
@@ -191,7 +189,6 @@ impl OpenOptions {
     [`NotFound`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html#variant.NotFound
     [`PermissionDenied`]: https://doc.rust-lang.org/nightly/std/io/enum.ErrorKind.html#variant.PermissionDenied
     */
-    #[cfg(not(target_os = "macos"))]
     pub fn open(&mut self, number: u32) -> Result<File> {
         Ok(self.options.open(number)?)
     }

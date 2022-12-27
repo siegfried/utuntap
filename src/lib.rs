@@ -11,6 +11,7 @@ use std::io::Result;
 #[derive(Debug, PartialEq)]
 enum Mode {
     Tun,
+    #[cfg(not(target_os = "macos"))]
     Tap,
 }
 
@@ -27,7 +28,6 @@ impl fmt::Display for Mode {
     #[cfg(target_os = "macos")]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let text = match self {
-            Mode::Tap => unimplemented!("TAP is not supported on macOS"),
             Mode::Tun => "utun",
         };
         write!(f, "{}", text)
@@ -183,10 +183,6 @@ impl OpenOptions {
         const CTLIOCGINFO: c_ulong = 0xc0644e03;
         const UTUN_CONTROL_NAME: &'static str = "com.apple.net.utun_control";
 
-        if let Mode::Tap = self.mode {
-            unimplemented!("TAP mode is not supported on macOS")
-        }
-
         let file = {
             let fd = unsafe { socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL) };
             if fd < 0 {
@@ -219,8 +215,7 @@ impl OpenOptions {
                 sc_family: AF_SYSTEM,
                 ss_sysaddr: AF_SYS_CONTROL,
                 sc_id: info.ctl_id,
-                // Some says the number is sc_unit, some says it is sc_unit - 1
-                sc_unit: number,
+                sc_unit: number + 1, // Real device number = sc_unit - 1
                 sc_reserved: [0; 5],
             };
 
@@ -247,6 +242,7 @@ impl OpenOptions {
                     &mut name_length as *mut socklen_t,
                 )
             };
+
             if err != 0 {
                 return Err(Error::last_os_error());
             }
@@ -276,31 +272,6 @@ impl Default for OpenOptions {
     }
 }
 
+#[cfg(not(target_os = "macos"))]
 pub mod tap;
 pub mod tun;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn change_mode() {
-        let mut options = OpenOptions::new();
-        assert_eq!(options.mode, Mode::Tun);
-        options.mode(Mode::Tap);
-        assert_eq!(options.mode, Mode::Tap);
-        options.mode(Mode::Tun);
-        assert_eq!(options.mode, Mode::Tun);
-    }
-
-    #[cfg(target_os = "linux")]
-    #[test]
-    fn turn_on_packet_info() {
-        let mut options = OpenOptions::new();
-        assert_eq!(options.packet_info, false);
-        options.packet_info(true);
-        assert_eq!(options.packet_info, true);
-        options.packet_info(false);
-        assert_eq!(options.packet_info, false);
-    }
-}
