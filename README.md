@@ -14,8 +14,7 @@ use utuntap::tun;
 
 let (mut file, filename) = tun::OpenOptions::new()
     .packet_info(false) // Only available on Linux
-    .number(10)
-    .open()
+    .open(10)
     .expect("failed to open device");
 ```
 
