@@ -29,6 +29,9 @@ case $OS in
         doas chown $USER:$USER tap11
         cd -
         ;;
+    "Darwin")
+        echo "macOS: make sure there is not utun10"
+        ;;
     *)
         printf "%s is not supported.\n" $OS >&2
         exit 1
