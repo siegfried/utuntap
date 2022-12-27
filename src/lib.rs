@@ -168,9 +168,8 @@ impl OpenOptions {
     #[cfg(target_os = "macos")]
     fn open(&mut self, number: u32) -> Result<File> {
         use libc::{
-            c_ulong, c_void, connect, fcntl, getsockopt, ioctl, sockaddr, sockaddr_ctl, socket,
-            socklen_t, FD_CLOEXEC, F_SETFD, F_SETFL, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL,
-            UTUN_OPT_IFNAME,
+            c_ulong, connect, fcntl, ioctl, sockaddr, sockaddr_ctl, socket, socklen_t, FD_CLOEXEC,
+            F_SETFD, F_SETFL, PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL,
         };
         use std::{
             ffi::{c_uchar, c_ushort},
@@ -227,22 +226,6 @@ impl OpenOptions {
                     mem::size_of_val(&addr) as socklen_t,
                 )
             };
-            if err != 0 {
-                return Err(Error::last_os_error());
-            }
-
-            let mut name_buf = [0u8; 64];
-            let mut name_length: socklen_t = 64;
-            let err = unsafe {
-                getsockopt(
-                    fd,
-                    SYSPROTO_CONTROL,
-                    UTUN_OPT_IFNAME,
-                    &mut name_buf as *mut _ as *mut c_void,
-                    &mut name_length as *mut socklen_t,
-                )
-            };
-
             if err != 0 {
                 return Err(Error::last_os_error());
             }
