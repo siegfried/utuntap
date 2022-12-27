@@ -86,8 +86,10 @@ impl OpenOptions {
 
     #[cfg(target_os = "linux")]
     fn open(&mut self, number: u32) -> Result<File> {
-        use std::os::unix::fs::OpenOptionsExt;
-        use std::os::unix::io::AsRawFd;
+        use std::{
+            io::Error,
+            os::unix::{fs::OpenOptionsExt, io::AsRawFd},
+        };
 
         let file = {
             let mut options = std::fs::OpenOptions::new();
@@ -101,10 +103,7 @@ impl OpenOptions {
         };
 
         use libc::{__c_anonymous_ifr_ifru, c_int, c_short, ifreq, ioctl, strcpy};
-        use std::{
-            ffi::CString,
-            mem,
-        };
+        use std::{ffi::CString, mem};
 
         const IFF_TUN: c_short = 0x0001;
         const IFF_TAP: c_short = 0x0002;
@@ -135,7 +134,11 @@ impl OpenOptions {
 
         unsafe {
             strcpy(request.ifr_name.as_mut_ptr(), device_name.as_ptr());
-            ioctl(file.as_raw_fd(), TUNSETIFF, &mut request);
+        }
+
+        let err = unsafe { ioctl(file.as_raw_fd(), TUNSETIFF, &mut request) };
+        if err != 0 {
+            return Err(Error::last_os_error());
         }
 
         Ok(file)
