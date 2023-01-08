@@ -4,7 +4,6 @@ extern crate nix;
 
 #[cfg(target_family = "unix")]
 use libc::O_NONBLOCK;
-use std::fmt;
 use std::fs::File;
 use std::io::Result;
 
@@ -15,20 +14,12 @@ enum Mode {
     Tap,
 }
 
+#[cfg(not(target_os = "macos"))]
 impl fmt::Display for Mode {
-    #[cfg(not(target_os = "macos"))]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         let text = match self {
-            Mode::Tap => "tap",
             Mode::Tun => "tun",
-        };
-        write!(f, "{}", text)
-    }
-
-    #[cfg(target_os = "macos")]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let text = match self {
-            Mode::Tun => "utun",
+            Mode::Tap => "tap",
         };
         write!(f, "{}", text)
     }
