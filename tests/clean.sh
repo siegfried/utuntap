@@ -17,6 +17,9 @@ case $OS in
         doas ifconfig tap11 destroy
         doas rm /dev/tap11
         ;;
+    "Darwin")
+        echo "Leaving testing"
+        ;;
     *)
         printf "%s is not supported.\n" $OS >&2
         exit 1

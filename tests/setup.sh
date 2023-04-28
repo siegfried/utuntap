@@ -29,6 +29,16 @@ case $OS in
         doas chown $USER:$USER tap11
         cd -
         ;;
+    "Darwin")
+        ifconfig utun10
+        if [ $? == 0 ]
+        then
+            echo "Error: utun10 exists" $OS >&2
+            exit 1
+        else
+            echo "Start testing..."
+        fi
+        ;;
     *)
         printf "%s is not supported.\n" $OS >&2
         exit 1

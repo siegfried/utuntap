@@ -10,6 +10,9 @@ case $OS in
         cargo build --verbose --target x86_64-unknown-linux-musl
         cargo test --verbose --target x86_64-unknown-linux-musl
         ;;
+    "Darwin")
+        sudo -E cargo test --verbose
+        ;;
     *)
         set -x
         cargo build --verbose

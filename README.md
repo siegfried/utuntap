@@ -14,8 +14,7 @@ use utuntap::tun;
 
 let (mut file, filename) = tun::OpenOptions::new()
     .packet_info(false) // Only available on Linux
-    .number(10)
-    .open()
+    .open(10)
     .expect("failed to open device");
 ```
 
@@ -25,3 +24,4 @@ let (mut file, filename) = tun::OpenOptions::new()
 | -- | ------ | ------- |
 | Linux | [![Build Status](https://travis-ci.org/siegfried/utuntap.svg?branch=master)](https://travis-ci.org/siegfried/utuntap) | `musl` is also supported. |
 | OpenBSD | [![builds.sr.ht status](https://builds.sr.ht/~siegfried/utuntap/.build.yml.svg)](https://builds.sr.ht/~siegfried/utuntap/.build.yml?) | According to the [manual](https://man.openbsd.org/tun.4), each packet read or written is prefixed with a tunnel header consisting of a 4-byte network byte order integer containing the address family. The values are listed [here](https://man.openbsd.org/netintro.4#ADDRESSING). |
+| macOS | TUN-only | A 4-byte address family prefixed is required by read and write: `[0u8, 0, 0, 2]` for IPv4; `[0u8, 0, 0, 10]` for IPv6. |
