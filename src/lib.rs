@@ -15,8 +15,8 @@ enum Mode {
 }
 
 #[cfg(not(target_os = "macos"))]
-impl fmt::Display for Mode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for Mode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let text = match self {
             Mode::Tun => "tun",
             Mode::Tap => "tap",
